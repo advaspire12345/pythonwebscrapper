@@ -80,9 +80,65 @@ if NEWSFEED_SCRAPER:
         print("I'm scrolling down 50 lines")
         time.sleep(SCROLL_PAUSE_TIME)
 
-        
+        only_int = []
+        share_count = 0
+        comments_count = 0
 
-        
+        for i in range(20):
+            action.scroll_by_amount(0, 200).perform()
+            p = driver.find_elements(By.CSS_SELECTOR, "a[class='x1i10hfl xjbqb8w x6umtig x1b1mbwd xaqea5y xav7gou x9f619 x1ypdohk xt0psk2 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x4uap5 x18d9i69 xkhd6sd x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz x1heor9g xt0b8zv xo1l8bm']:not(.seen)")
+
+            if not len(p):
+                NO_MORE_POSTS = True
+                print("no posts found")
+                sleep(5)
+            else:
+                print("found posts")
+                print('total posts found:', len(p))
+                break
+                
+        for index, e in enumerate(p):
+            action.scroll_by_amount(0, 120).perform()
+            sleep(3)
+
+            links = e.find_elements(By.XPATH, '//a[contains(@href, "/ads/about/")]')
+            action.scroll_by_amount(0, -120).perform()
+            sleep(3)
+
+            if links:
+                print("Found ads with '/ads/'")
+
+            if not links:
+                 links = e.find_elements(By.XPATH, '//a[@href="#"]')
+                 print("trying to find href='#'")
+                 sleep(3)
+
+            wait = WebDriverWait(driver, 10)
+
+            if not links:
+                print("Can't find any ads post")
+
+            print("this is the links:", links)
+
+            if len(links):
+                el = e.find_elements(By.XPATH, '//a[@role="link"]')
+                print("looking into @role='link'")
+                driver.execute_script('arguments[0].scrollIntoView(true);', el)
+                sleep(5)
+                if len(el):
+                    print("ads link found: ", el[0].text)
+                    action.move_to_element(el[-1]).perform()
+                    a = wait.until(EC.element_to_be_clickable(el[0]))
+                    sleep(2)
+                    if '/ads/' in e.get_attribute('innerHTML'):
+                        like_count = e.find_elements(By.XPATH, './/span[@class=""]')
+                        if len(like_count):
+                            only_int = [int(s) for s in like_count[0].text.split() if s.isdigit()]
+                            if len(only_int):
+                                print('like_count:', only_int[0])
+
+            driver.execute_script('arguments[0].classList.add("seen");', e)
+
         # Calculate new scroll height and compare with last scroll height
         nh = driver.execute_script("return document.body.scrollHeight")
         if nh == lh:
